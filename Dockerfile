@@ -1,28 +1,35 @@
-# استفاده از نسخه سبک پایتون
 FROM python:3.11-slim
 
-# تعیین پوشه کاری
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
 WORKDIR /app
 
-# کپی کردن پکیج‌های آفلاین
-COPY pkg /app/pkg
-COPY requirements.txt .
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
-# ۱. نصب ابزارهای Build و وابستگی‌های اصلی (بدون نیاز به اینترنت)
-RUN pip install --no-index --find-links=/app/pkg setuptools wheel typer click rich shellingham
+COPY pyproject.toml requirements.txt ./
+COPY pkg ./pkg
 
-# ۲. نصب پکیج‌های سنگین از میرور لیارا
-RUN pip install pandas numpy --index-url https://package-mirror.liara.ir/repository/pypi/simple
+RUN pip install --no-index --find-links=/app/pkg typer click rich shellingham
 
-# کپی کردن کل پروژه
-COPY . .
+RUN pip install --no-cache-dir pandas typer rich
 
-# ۳. نصب پروژه به‌صورت Editable با حذف اجباری لایه Isolation
-# استفاده از سوییچ مستقیم --no-build-isolation برای جلوگیری از مراجعه به pypi.org
-RUN pip install --no-build-isolation -e . --no-deps
+COPY src ./src
+COPY data/raw ./data/raw
+COPY dvc.yaml ./
+COPY run_pipeline.py run_pipeline_offline.py ./
+COPY reports ./reports
 
-# دستور اجرا
-CMD ["python", "-m", "airbnb_ops.cli"]
+RUN pip install --no-cache-dir .
+
+RUN useradd -m appuser && chown -R appuser:appuser /app
+USER appuser
+
+CMD ["airbnb-ops", "run"]
 
 
 
