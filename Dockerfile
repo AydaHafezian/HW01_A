@@ -15,8 +15,7 @@ COPY pyproject.toml requirements.txt ./
 COPY pkg ./pkg
 
 RUN pip install --no-index --find-links=/app/pkg typer click rich shellingham
-
-RUN pip install --no-cache-dir pandas typer rich
+RUN pip install pandas numpy --index-url https://package-mirror.liara.ir/repository/pypi/simple
 
 COPY src ./src
 COPY data/raw ./data/raw
@@ -24,12 +23,13 @@ COPY dvc.yaml ./
 COPY run_pipeline.py run_pipeline_offline.py ./
 COPY reports ./reports
 
-RUN pip install --no-cache-dir .
+RUN pip install -e . --no-deps
 
 RUN useradd -m appuser && chown -R appuser:appuser /app
 USER appuser
 
-CMD ["airbnb-ops", "run"]
+CMD ["python", "-m", "airbnb_ops.cli"]
+
 
 
 
