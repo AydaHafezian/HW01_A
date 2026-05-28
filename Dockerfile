@@ -21,8 +21,8 @@ COPY src ./src
 COPY data/raw ./data/raw
 COPY dvc.yaml ./
 COPY run_pipeline.py run_pipeline_offline.py ./
-COPY reports ./reports
 
+RUN mkdir -p /app/reports
 RUN pip install -e . --no-deps
 
 RUN useradd -m appuser && chown -R appuser:appuser /app
